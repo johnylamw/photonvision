@@ -16,11 +16,15 @@
  */
 package org.photonvision.vision.target;
 
+import org.opencv.calib3d.Calib3d;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.TermCriteria;
 import org.opencv.core.Point;
 import org.opencv.core.RotatedRect;
 import org.photonvision.common.util.math.MathUtils;
 import org.photonvision.common.util.numbers.DoubleCouple;
 import org.photonvision.vision.opencv.DualOffsetValues;
+import org.photonvision.vision.calibration.CameraCalibrationCoefficients;
 
 public class TargetCalculations {
     /**
@@ -41,7 +45,27 @@ public class TargetCalculations {
             double horizontalFocalLength,
             double offsetCenterY,
             double targetCenterY,
-            double verticalFocalLength) {
+            double verticalFocalLength,
+            CameraCalibrationCoefficients cameraCal) {
+        
+        if (cameraCal != null) {
+            MatOfPoint2f temp = new MatOfPoint2f();
+            temp.fromArray(new Point(targetCenterX, targetCenterY));
+            // Tighten up termination criteria
+            var termCriteria = new TermCriteria(TermCriteria.COUNT + TermCriteria.EPS, 30, 1e-6);
+            Calib3d.undistortImagePoints(
+                    temp,
+                    temp,
+                    cameraCal.getCameraIntrinsicsMat(),
+                    cameraCal.getDistCoeffsMat(),
+                    termCriteria);
+            float buff[] = new float[2];
+            temp.get(0, 0, buff);
+            temp.release();
+            targetCenterX = buff[0];
+            targetCenterY = buff[1];
+        }
+
         double yaw = Math.atan((targetCenterX - offsetCenterX) / horizontalFocalLength);
         double pitch =
                 Math.atan((offsetCenterY - targetCenterY) / (verticalFocalLength / Math.cos(yaw)));

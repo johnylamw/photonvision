@@ -38,6 +38,7 @@ import org.photonvision.vision.opencv.CVShape;
 import org.photonvision.vision.opencv.Contour;
 import org.photonvision.vision.opencv.DualOffsetValues;
 import org.photonvision.vision.opencv.Releasable;
+import org.photonvision.vision.calibration.CameraCalibrationCoefficients;
 
 public class TrackedTarget implements Releasable {
     public final Contour m_mainContour;
@@ -92,7 +93,8 @@ public class TrackedTarget implements Releasable {
                         params.horizontalFocalLength,
                         params.cameraCenterPoint.y,
                         tagDetection.getCenterY(),
-                        params.verticalFocalLength);
+                        params.verticalFocalLength,
+                        params.cameraCal);
         m_yaw = yawPitch.getFirst();
         m_pitch = yawPitch.getSecond();
         var bestPose = new Transform3d();
@@ -187,7 +189,8 @@ public class TrackedTarget implements Releasable {
                         params.horizontalFocalLength,
                         params.cameraCenterPoint.y,
                         result.getCenterY(),
-                        params.verticalFocalLength);
+                        params.verticalFocalLength,
+                        params.cameraCal);
         m_yaw = yawPitch.getFirst();
         m_pitch = yawPitch.getSecond();
 
@@ -323,7 +326,8 @@ public class TrackedTarget implements Releasable {
                         params.horizontalFocalLength,
                         m_robotOffsetPoint.y,
                         m_targetOffsetPoint.y,
-                        params.verticalFocalLength);
+                        params.verticalFocalLength,
+                        params.cameraCal);
         m_yaw = yawPitch.getFirst();
         m_pitch = yawPitch.getSecond();
 
@@ -480,6 +484,11 @@ public class TrackedTarget implements Releasable {
         // area calculation values
         final double imageArea;
 
+        // Camera calibration, null if not calibrated
+        final CameraCalibrationCoefficients cameraCal;
+
+
+
         public TargetCalculationParameters(
                 boolean isLandscape,
                 TargetOffsetPointEdge targetOffsetPointEdge,
@@ -489,7 +498,8 @@ public class TrackedTarget implements Releasable {
                 Point cameraCenterPoint,
                 double horizontalFocalLength,
                 double verticalFocalLength,
-                double imageArea) {
+                double imageArea,
+                CameraCalibrationCoefficients cal) {
 
             this.isLandscape = isLandscape;
             this.targetOffsetPointEdge = targetOffsetPointEdge;
@@ -500,6 +510,7 @@ public class TrackedTarget implements Releasable {
             this.horizontalFocalLength = horizontalFocalLength;
             this.verticalFocalLength = verticalFocalLength;
             this.imageArea = imageArea;
+            this.cameraCal = cal;
         }
 
         public TargetCalculationParameters(
@@ -520,6 +531,7 @@ public class TrackedTarget implements Releasable {
             this.horizontalFocalLength = frameStaticProperties.horizontalFocalLength;
             this.verticalFocalLength = frameStaticProperties.verticalFocalLength;
             this.imageArea = frameStaticProperties.imageArea;
+            this.cameraCal = frameStaticProperties.cameraCalibration;
         }
     }
 }
